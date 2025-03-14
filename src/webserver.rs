@@ -1,0 +1,58 @@
+use crate::{config::Config, error::{{crate_name | upper_camel_case}}Result};
+use axum::{
+    Router,
+    extract::{Path, State},
+    response::Html,
+    routing::get,
+};
+use tokio::net::TcpListener;
+use tokio_graceful_shutdown::{SubsystemBuilder, SubsystemHandle};
+use tracing::info;
+use worterbuch_client::Worterbuch;
+
+pub fn start_webserver(
+    subsys: &SubsystemHandle,
+    config: Config,
+    wb: worterbuch_client::Worterbuch,
+) {
+    info!("Starting webserver subsystem");
+    subsys.start(SubsystemBuilder::new("webserver", |subsys| {
+        webserver(subsys, wb, config)
+    }));
+}
+
+async fn webserver(
+    subsys: SubsystemHandle,
+    wb: Worterbuch,
+    config: Config,
+) -> {{crate_name | upper_camel_case}}Result<()> {
+    let app = Router::new().route("/{*path}", get(handler).with_state(wb.clone()));
+
+    info!(
+        "Listening on {}:{} …",
+        config.webserver.bind_address, config.webserver.port
+    );
+    let listener = TcpListener::bind(format!(
+        "{}:{}",
+        config.webserver.bind_address, config.webserver.port
+    ))
+    .await?;
+    info!("REST endpoint up at http://{}", listener.local_addr()?);
+    axum::serve(listener, app)
+        .with_graceful_shutdown(async move { subsys.on_shutdown_requested().await })
+        .await?;
+
+    Ok(())
+}
+
+async fn handler(
+    Path(path): Path<Vec<String>>,
+    State(wb): State<Worterbuch>,
+) -> {{crate_name | upper_camel_case}}Result<Html<String>> {
+    let greet = wb
+        .get(path.join("/"))
+        .await?
+        .unwrap_or("&lt;unknown&gt;".to_owned());
+
+    Ok(Html(format!("<h1>Hello, {greet}!</h1>")))
+}
