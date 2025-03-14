@@ -10,7 +10,7 @@ pub enum {{crate_name | upper_camel_case}}Error {
     WorterbuchError(#[from] ConnectionError),
     #[error("I/O error: {0}")]
     IoError(#[from] io::Error),
-    #[error("TOML parse error: {0}")]
+    #[error("YAML parse error: {0}")]
     YamlError(#[from] serde_yaml::Error),
 }
 
