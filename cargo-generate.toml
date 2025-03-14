@@ -3,3 +3,4 @@ ignore = [".github", "target"]
 
 [placeholders]
 project_description = { prompt = "Enter a project description", type = "string", default = "[insert description]" }
+organization_name = { prompt = "Organization name (i.e. github/dockerhub organization or github/dockerhub username)", type = "string", default = "[insert organization]" }
