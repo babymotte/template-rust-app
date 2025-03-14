@@ -21,8 +21,8 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: {{crate_name | kebab_case}}-${{ runner.os }}-cargo
-          key: {{crate_name | kebab_case}}-${{ runner.os }}-cargo
+          shared-key: {{crate_name | kebab_case}}-${{ "runner.os" | prepend: "{{ " | append: " }}" }}-cargo
+          key: {{crate_name | kebab_case}}-${{ "runner.os" | prepend: "{{ " | append: " }}" }}-cargo
       - uses: davidB/rust-cargo-make@v1
       - name: Run linter
         run: cargo clippy -- --deny warnings
