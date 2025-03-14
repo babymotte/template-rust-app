@@ -2,4 +2,4 @@
 ignore = [".github", "target"]
 
 [placeholders]
-project_description = { prompt = "Enter a project description", type = "string" }
+project_description = { prompt = "Enter a project description", type = "string", default = "[insert description]" }
