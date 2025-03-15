@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- use crate::error::{{crate_name | upper_camel_case}}Result;
+use crate::error::{{crate_name | upper_camel_case}}Result;
 use clap::Parser;
 use gethostname::gethostname;
 use serde::Deserialize;
@@ -25,6 +25,7 @@ use std::{
 };
 use tokio::fs;
 use tracing::{info, warn};
+use worterbuch_client::topic;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about)]
@@ -68,6 +69,27 @@ impl Default for WebServerConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct TelemetryConfig {
+    pub endpoint: EndpointConfig,
+    pub credentials: Option<Credentials>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum EndpointConfig {
+    Grpc(String),
+    Http(String),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Credentials {
+    pub user: String,
+    pub token: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     pub name: String,
     pub instance: InstanceConfig
@@ -102,6 +124,8 @@ pub struct Config {
     pub app: AppConfig,
     #[serde(default = "WebServerConfig::default")]
     pub webserver: WebServerConfig,
+    #[serde(default)]
+    pub telemetry: Option<TelemetryConfig>,
 }
 
 impl Config {
@@ -160,5 +184,9 @@ impl Config {
         }
 
         Ok(())
+    }
+
+    pub fn instance_name(&self) -> String {
+        topic!(self.app.name, self.app.instance.name)
     }
 }

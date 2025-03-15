@@ -24,7 +24,8 @@ use axum::{
 };
 use tokio::net::TcpListener;
 use tokio_graceful_shutdown::{SubsystemBuilder, SubsystemHandle};
-use tracing::info;
+use tower_http::trace::TraceLayer;
+use tracing::{info, instrument};
 use worterbuch_client::Worterbuch;
 
 pub fn start_webserver(
@@ -38,12 +39,15 @@ pub fn start_webserver(
     }));
 }
 
+#[instrument(skip(subsys, wb), ret, err)]
 async fn webserver(
     subsys: SubsystemHandle,
     wb: Worterbuch,
     config: Config,
 ) -> {{crate_name | upper_camel_case}}Result<()> {
-    let app = Router::new().route("/{*path}", get(handler).with_state(wb.clone()));
+    let app = Router::new()
+        .route("/{*path}", get(handler).with_state(wb.clone()))
+        .layer(TraceLayer::new_for_http());
 
     info!(
         "Listening on {}:{} …",
@@ -62,6 +66,7 @@ async fn webserver(
     Ok(())
 }
 
+#[instrument(skip(wb), ret)]
 async fn handler(
     Path(path): Path<Vec<String>>,
     State(wb): State<Worterbuch>,

@@ -15,21 +15,19 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod telemetry;
+
 use miette::Result;
-use std::{io, time::Duration};
+use std::time::Duration;
 use {{crate_name | snake_case}}::{config::Config, webserver::start_webserver, worterbuch::start_worterbuch};
 use tokio_graceful_shutdown::{SubsystemBuilder, SubsystemHandle, Toplevel};
 use tracing::info;
-use tracing_subscriber::EnvFilter;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_writer(io::stderr)
-        .with_env_filter(EnvFilter::from_default_env())
-        .init();
-
     let config = Config::load().await?;
+
+    telemetry::init(&config).await?;
 
     info!("Starting {} instance '{}' …", config.app.name, config.app.instance.name);
 

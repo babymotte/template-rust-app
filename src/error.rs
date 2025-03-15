@@ -15,12 +15,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use axum::{http::StatusCode, response::IntoResponse};
-use miette::Diagnostic;
-use std::io;
-use thiserror::Error;
-use worterbuch_client::ConnectionError;
-
+ use axum::{http::StatusCode, response::IntoResponse};
+ use miette::Diagnostic;
+ use opentelemetry::trace::TraceError;
+ use std::io;
+ use thiserror::Error;
+ use tracing_subscriber::{filter::ParseError, util::TryInitError};
+ use worterbuch_client::ConnectionError;
+ 
 #[derive(Error, Debug, Diagnostic)]
 pub enum {{crate_name | upper_camel_case}}Error {
     #[error("Worterbuch error: {0}")]
@@ -29,6 +31,12 @@ pub enum {{crate_name | upper_camel_case}}Error {
     IoError(#[from] io::Error),
     #[error("YAML parse error: {0}")]
     YamlError(#[from] serde_yaml::Error),
+    #[error("Tracing init error: {0}")]
+    TryInitError(#[from] TryInitError),
+    #[error("Tracing init error: {0}")]
+    TraceError(#[from] TraceError),
+    #[error("Tracing config parse error: {0}")]
+    ParseError(#[from] ParseError),
 }
 
 impl IntoResponse for {{crate_name | upper_camel_case}}Error {
